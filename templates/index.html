@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализатор голоса</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        danger: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Анализ голоса</h1>
+        
+        <div class="space-y-6">
+            <!-- Блок загрузки файла -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <input type="file" id="fileInput" class="hidden" accept="audio/*" />
+                <label for="fileInput" class="cursor-pointer">
+                    <div class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span class="text-primary font-medium">Выберите файл</span>
+                        <p class="text-gray-500 text-sm mt-1">или перетащите сюда</p>
+                    </div>
+                </label>
+                <p id="fileName" class="text-sm text-gray-600 mt-2"></p>
+            </div>
+
+            <!-- Блок записи -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-center space-x-4">
+                    <button id="start" class="px-6 py-2 bg-danger text-white rounded-full hover:bg-red-600 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        Запись
+                    </button>
+                    <button id="stop" disabled class="px-6 py-2 bg-gray-300 text-gray-600 rounded-full cursor-not-allowed flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                        </svg>
+                        Стоп
+                    </button>
+                </div>
+                <div id="recordingStatus" class="hidden text-center">
+                    <div class="inline-flex items-center text-danger">
+                        <div class="w-3 h-3 bg-danger rounded-full animate-pulse mr-2"></div>
+                        <span>Идет запись...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма отправки -->
+            <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
+                <input type="file" name="audio" id="audioInput" class="hidden" accept="audio/wav" />
+                <button type="submit" id="submitBtn" disabled class="w-full py-3 bg-primary text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    Анализировать
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        const fileInput = document.getElementById('fileInput');
+        const audioInput = document.getElementById('audioInput');
+        
+        // Обработчик файлового ввода
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                audioInput.files = dataTransfer.files;
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // Запись с микрофона
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+
+                document.getElementById('start').addEventListener('click', () => {
+                    audioChunks = [];
+                    mediaRecorder.start();
+                    document.getElementById('start').disabled = true;
+                    document.getElementById('stop').disabled = false;
+                    document.getElementById('recordingStatus').classList.remove('hidden');
+                });
+
+                document.getElementById('stop').addEventListener('click', () => {
+                    mediaRecorder.stop();
+                    document.getElementById('start').disabled = false;
+                    document.getElementById('stop').disabled = true;
+                    document.getElementById('recordingStatus').classList.add('hidden');
+                });
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const file = new File([audioBlob], 'recording.wav');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    audioInput.files = dataTransfer.files;
+                    document.getElementById('submitBtn').disabled = false;
+                };
+            })
+            .catch(err => {
+                console.error('Ошибка доступа к микрофону:', err);
+                alert('Для работы диктофона требуется доступ к микрофону!');
+            });
+    </script>
+</body>
+</html>
