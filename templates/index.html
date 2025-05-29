@@ -13,62 +13,78 @@
                         primary: '#3B82F6',
                         secondary: '#10B981',
                         danger: '#EF4444'
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Анализ голоса</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Анализ голоса</h1>
         
-        <div class="space-y-6">
+        <div class="space-y-8">
             <!-- Блок загрузки файла -->
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center transition-colors hover:border-primary group">
                 <input type="file" id="fileInput" class="hidden" accept="audio/*" />
                 <label for="fileInput" class="cursor-pointer">
-                    <div class="flex flex-col items-center">
-                        <svg class="w-12 h-12 text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex flex-col items-center space-y-3">
+                        <svg class="w-14 h-14 text-primary mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
-                        <span class="text-primary font-medium">Выберите файл</span>
-                        <p class="text-gray-500 text-sm mt-1">или перетащите сюда</p>
+                        <div>
+                            <span class="text-primary font-semibold text-lg">Выберите аудиофайл</span>
+                            <p class="text-gray-500 text-sm mt-1">MP3, WAV, OGG или другой аудиоформат</p>
+                        </div>
                     </div>
                 </label>
-                <p id="fileName" class="text-sm text-gray-600 mt-2"></p>
+                <p id="fileName" class="text-sm text-gray-600 mt-3 truncate max-w-full"></p>
+            </div>
+
+            <!-- Разделитель -->
+            <div class="flex items-center">
+                <div class="flex-1 border-t border-gray-200"></div>
+                <span class="px-4 text-gray-400 text-sm">или</span>
+                <div class="flex-1 border-t border-gray-200"></div>
             </div>
 
             <!-- Блок записи -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-center space-x-4">
-                    <button id="start" class="px-6 py-2 bg-danger text-white rounded-full hover:bg-red-600 transition flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button id="start" class="px-8 py-3 bg-secondary hover:bg-green-600 text-white rounded-xl transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                         </svg>
-                        Запись
+                        Начать запись
                     </button>
-                    <button id="stop" disabled class="px-6 py-2 bg-gray-300 text-gray-600 rounded-full cursor-not-allowed flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="stop" disabled class="px-8 py-3 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed flex items-center gap-2 w-full sm:w-auto justify-center transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
                         </svg>
-                        Стоп
+                        Остановить
                     </button>
                 </div>
-                <div id="recordingStatus" class="hidden text-center">
-                    <div class="inline-flex items-center text-danger">
-                        <div class="w-3 h-3 bg-danger rounded-full animate-pulse mr-2"></div>
-                        <span>Идет запись...</span>
+                
+                <div id="recordingStatus" class="hidden text-center animate-pulse-fast">
+                    <div class="inline-flex items-center text-danger gap-2">
+                        <div class="w-3 h-3 bg-danger rounded-full"></div>
+                        <span class="font-medium">Идет запись...</span>
                     </div>
                 </div>
             </div>
 
             <!-- Форма отправки -->
-            <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
-                <input type="file" name="audio" id="audioInput" class="hidden" accept="audio/wav" />
-                <button type="submit" id="submitBtn" disabled class="w-full py-3 bg-primary text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed">
-                    Анализировать
+            <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="audio" id="audioInput" class="hidden" />
+                <button type="submit" id="submitBtn" disabled class="w-full py-4 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Анализировать аудио</span>
+                    <div id="loadingSpinner" class="hidden justify-center items-center">
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    </div>
                 </button>
             </form>
         </div>
@@ -79,8 +95,6 @@
         let audioChunks = [];
         const fileInput = document.getElementById('fileInput');
         const audioInput = document.getElementById('audioInput');
-        
-        // Обработчик файлового ввода
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -92,7 +106,6 @@
             }
         });
 
-        // Запись с микрофона
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 mediaRecorder = new MediaRecorder(stream);
@@ -103,6 +116,8 @@
                     document.getElementById('start').disabled = true;
                     document.getElementById('stop').disabled = false;
                     document.getElementById('recordingStatus').classList.remove('hidden');
+                    document.getElementById('stop').classList.add('bg-danger', 'text-white', 'hover:bg-red-600', 'cursor-pointer');
+                    document.getElementById('stop').classList.remove('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
                 });
 
                 document.getElementById('stop').addEventListener('click', () => {
@@ -110,6 +125,8 @@
                     document.getElementById('start').disabled = false;
                     document.getElementById('stop').disabled = true;
                     document.getElementById('recordingStatus').classList.add('hidden');
+                    document.getElementById('stop').classList.remove('bg-danger', 'hover:bg-red-600', 'cursor-pointer', 'text-white');
+                    document.getElementById('stop').classList.add('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
                 });
 
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
